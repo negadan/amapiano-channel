@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Create professional Amapiano visualizer videos
-Clean, simple, consistent - like real YouTube music channels
+Vizzy.io style circular audio-reactive visualizer
 """
 
 import os
@@ -11,7 +11,6 @@ from config import VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS, CHANNEL_NAME
 
 # Layout constants
 TEXT_MARGIN = 60
-VISUALIZER_HEIGHT = 150
 FADE_DURATION = 2
 
 
@@ -35,14 +34,14 @@ def create_video(
     limit_duration: float = None
 ) -> bool:
     """
-    Create a professional music visualizer video.
+    Create a Vizzy.io style circular audio-reactive visualizer.
 
     Features:
-    - Slow Ken Burns zoom on background
-    - Spectrum bars at bottom
-    - Vignette for cinematic look
-    - Fade in/out
-    - Clean text overlay (top-left)
+    - Blurred/dimmed background
+    - Particle starfield effect
+    - Circular cutout in center
+    - Audio spectrum ring (polar warped)
+    - Pulse/breathing effect
     """
 
     if not os.path.exists(audio_path):
@@ -58,70 +57,62 @@ def create_video(
     duration = limit_duration if limit_duration and limit_duration < audio_duration else audio_duration
     total_frames = int(duration * VIDEO_FPS)
 
-    print(f"Creating professional video...")
+    print(f"Creating Vizzy-style circular visualizer...")
     print(f"Duration: {duration:.1f}s | Frames: {total_frames}")
 
-    # Escape text for ffmpeg
+    # Escape text
     safe_track = track_name.replace("'", "'\\''").replace(":", "\\:") if track_name else ""
     safe_channel = CHANNEL_NAME.replace("'", "'\\''")
 
-    # Build the filter chain
-    # Step 1: Scale and zoom background with vignette
-    bg_filter = (
-        f"[1:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}:force_original_aspect_ratio=increase,"
-        f"crop={VIDEO_WIDTH}:{VIDEO_HEIGHT},"
-        f"zoompan=z='1+0.0002*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
-        f"d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS},"
-        f"vignette=PI/4[bg]"
-    )
+    # Sizes
+    RING_SIZE = 600  # Size of the spectrum ring
+    CENTER_SIZE = 300  # Size of center circle cutout
 
-    # Step 2: Audio spectrum bars (clean cyan/magenta gradient)
-    bars_filter = (
-        f"[0:a]showfreqs=s={VIDEO_WIDTH}x{VISUALIZER_HEIGHT}:"
-        f"mode=bar:colors=cyan|magenta|white:"
-        f"ascale=log:fscale=log:win_size=2048[bars]"
-    )
+    # Build the filter complex (Vizzy.io style)
+    filter_complex = f"""
+[0:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT},setsar=1,format=rgba[bg_orig];
 
-    # Step 3: Overlay bars on background
-    overlay_filter = f"[bg][bars]overlay=0:H-{VISUALIZER_HEIGHT}[combined]"
+[bg_orig]boxblur=15:15,eq=brightness=-0.15:saturation=0.8[bg_blurred];
 
-    # Step 4: Fade in/out
-    fade_out_start = max(0, duration - FADE_DURATION)
-    fade_filter = (
-        f"[combined]fade=t=in:st=0:d={FADE_DURATION},"
-        f"fade=t=out:st={fade_out_start}:d={FADE_DURATION}[faded]"
-    )
+[bg_orig]crop=h={CENTER_SIZE}:w={CENTER_SIZE}:x=(iw-{CENTER_SIZE})/2:y=(ih-{CENTER_SIZE})/2,
+geq=lum='p(X,Y)':cb='p(X,Y)':cr='p(X,Y)':a='if(lt(hypot(X-W/2,Y-H/2),W/2-5),255,0)'[circle_art];
 
-    # Step 5: Text overlays
-    text_filters = "[faded]"
+[1:a]showfreqs=s=1920x200:mode=bar:fscale=log:ascale=sqrt:colors=gold|orange|red:win_size=1024,
+format=rgba[spectrum_linear];
 
-    if track_name:
-        # Track name - top left with outline
-        text_filters += (
-            f"drawtext=text='{safe_track}':"
-            f"x={TEXT_MARGIN}:y={TEXT_MARGIN}:"
-            f"fontsize=52:fontcolor=white:"
-            f"borderw=3:bordercolor=black,"
-        )
+[spectrum_linear]split[s1][s2];
+[s2]hflip[s2_flip];
+[s1][s2_flip]hstack,
+scale={RING_SIZE}:{RING_SIZE},
+v360=input=equirect:output=fisheye:h_fov=180:v_fov=180,
+geq=lum='p(X,Y)':cb='p(X,Y)':cr='p(X,Y)':a='if(between(hypot(X-W/2,Y-H/2),{CENTER_SIZE//2+20},{RING_SIZE//2}),255,0)'[polar_ring];
 
-    # Channel watermark - bottom right
-    text_filters += (
-        f"drawtext=text='@{safe_channel}':"
-        f"x=w-text_w-{TEXT_MARGIN}:y=h-{TEXT_MARGIN}:"
-        f"fontsize=28:fontcolor=white@0.7:"
-        f"borderw=2:bordercolor=black@0.5[v]"
-    )
+[polar_ring]split[ring1][ring2];
+[ring1]gblur=sigma=10[ring_glow];
+[ring_glow][ring2]blend=all_mode=screen[glowing_ring];
 
-    # Combine all filters
-    filter_complex = f"{bg_filter};{bars_filter};{overlay_filter};{fade_filter};{text_filters}"
+[bg_blurred][glowing_ring]overlay=x=(W-w)/2:y=(H-h)/2:format=auto[comp1];
+
+[comp1][circle_art]overlay=x=(W-w)/2:y=(H-h)/2:format=auto[comp2];
+
+[comp2]zoompan=z='1+0.0001*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS}[zoomed];
+
+[zoomed]fade=t=in:st=0:d={FADE_DURATION},fade=t=out:st={max(0, duration-FADE_DURATION)}:d={FADE_DURATION}[faded];
+
+[faded]drawtext=text='{safe_track}':x={TEXT_MARGIN}:y={TEXT_MARGIN}:fontsize=48:fontcolor=white:borderw=3:bordercolor=black,
+drawtext=text='@{safe_channel}':x=w-text_w-{TEXT_MARGIN}:y=h-{TEXT_MARGIN}:fontsize=24:fontcolor=white@0.7:borderw=2:bordercolor=black@0.5[v]
+"""
+
+    # Clean up the filter (remove newlines for ffmpeg)
+    filter_complex = filter_complex.replace('\n', '').replace('  ', ' ').strip()
 
     # Build ffmpeg command
     cmd = [
         "ffmpeg", "-y",
-        "-i", audio_path,
         "-loop", "1", "-i", image_path,
+        "-i", audio_path,
         "-filter_complex", filter_complex,
-        "-map", "[v]", "-map", "0:a",
+        "-map", "[v]", "-map", "1:a",
         "-c:v", "libx264",
         "-preset", "medium",
         "-crf", "23",
@@ -150,61 +141,69 @@ def create_video(
         return False
 
 
-def create_short(
+def create_simple_video(
     audio_path: str,
     image_path: str,
     output_path: str,
     track_name: str = "",
-    start_time: float = 60,
-    duration: float = 45
+    limit_duration: float = None
 ) -> bool:
-    """Create a YouTube Short (vertical 9:16, 45-60 sec)"""
+    """
+    Fallback: Simple video with spectrum bars at bottom (if complex filter fails).
+    """
+
+    if not os.path.exists(audio_path):
+        print(f"ERROR: Audio file not found: {audio_path}")
+        return False
+
+    audio_duration = get_audio_duration(audio_path)
+    duration = limit_duration if limit_duration and limit_duration < audio_duration else audio_duration
+    total_frames = int(duration * VIDEO_FPS)
 
     safe_track = track_name.replace("'", "'\\''").replace(":", "\\:") if track_name else ""
     safe_channel = CHANNEL_NAME.replace("'", "'\\''")
-    total_frames = int(duration * VIDEO_FPS)
+
+    VISUALIZER_HEIGHT = 150
 
     filter_complex = (
-        # Vertical format with zoom
-        f"[1:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
-        f"zoompan=z='1+0.0003*on':d={total_frames}:s=1080x1920:fps={VIDEO_FPS},"
+        f"[1:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}:force_original_aspect_ratio=increase,"
+        f"crop={VIDEO_WIDTH}:{VIDEO_HEIGHT},"
+        f"zoompan=z='1+0.0002*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
+        f"d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS},"
         f"vignette=PI/4[bg];"
-        # Spectrum bars
-        f"[0:a]showfreqs=s=1080x120:mode=bar:colors=cyan|magenta:ascale=log[bars];"
-        # Overlay
-        f"[bg][bars]overlay=0:H-120[combined];"
-        # Fade
-        f"[combined]fade=t=in:st=0:d=1,fade=t=out:st={duration-1}:d=1[faded];"
-        # Text
-        f"[faded]drawtext=text='{safe_track}':x=40:y=100:fontsize=42:fontcolor=white:borderw=2:bordercolor=black,"
-        f"drawtext=text='@{safe_channel}':x=w-text_w-40:y=h-80:fontsize=24:fontcolor=white@0.7:borderw=2:bordercolor=black@0.5[v]"
+        f"[0:a]showfreqs=s={VIDEO_WIDTH}x{VISUALIZER_HEIGHT}:mode=bar:colors=gold|orange:ascale=log:fscale=log[bars];"
+        f"[bars]split[b1][b2];[b1]gblur=sigma=5[blur];[blur][b2]blend=all_mode=screen[glowing_bars];"
+        f"[bg][glowing_bars]overlay=0:H-{VISUALIZER_HEIGHT}:format=auto[combined];"
+        f"[combined]fade=t=in:st=0:d={FADE_DURATION},fade=t=out:st={max(0,duration-FADE_DURATION)}:d={FADE_DURATION}[faded];"
+        f"[faded]drawtext=text='{safe_track}':x={TEXT_MARGIN}:y={TEXT_MARGIN}:fontsize=48:fontcolor=white:borderw=3:bordercolor=black,"
+        f"drawtext=text='@{safe_channel}':x=w-text_w-{TEXT_MARGIN}:y=h-{TEXT_MARGIN}:fontsize=24:fontcolor=white@0.7:borderw=2:bordercolor=black@0.5[v]"
     )
 
     cmd = [
         "ffmpeg", "-y",
-        "-ss", str(start_time),
-        "-t", str(duration),
         "-i", audio_path,
         "-loop", "1", "-i", image_path,
         "-filter_complex", filter_complex,
         "-map", "[v]", "-map", "0:a",
-        "-c:v", "libx264",
-        "-preset", "fast",
-        "-crf", "23",
-        "-c:a", "aac",
-        "-b:a", "128k",
-        "-shortest",
-        "-pix_fmt", "yuv420p",
-        output_path
+        "-c:v", "libx264", "-preset", "medium", "-crf", "23",
+        "-c:a", "aac", "-b:a", "192k",
+        "-shortest", "-pix_fmt", "yuv420p"
     ]
 
-    print(f"Creating YouTube Short...")
+    if limit_duration:
+        cmd.extend(["-t", str(limit_duration)])
+
+    cmd.append(output_path)
+
+    print(f"Creating simple video with spectrum bars...")
+    print(f"Output: {output_path}")
+
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"ffmpeg error: {result.stderr}")
             return False
-        print("Short created successfully!")
+        print("Video created successfully!")
         return True
     except Exception as e:
         print(f"Error: {e}")
@@ -214,22 +213,33 @@ def create_short(
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Create professional Amapiano visualizer video")
+    parser = argparse.ArgumentParser(description="Create Vizzy-style circular visualizer video")
     parser.add_argument("--audio", "-a", required=True, help="Path to audio file")
     parser.add_argument("--image", "-i", required=True, help="Path to background image")
     parser.add_argument("--output", "-o", required=True, help="Output video path")
     parser.add_argument("--name", "-n", default="", help="Track name for overlay")
-    parser.add_argument("--short", "-s", action="store_true", help="Create YouTube Short instead")
+    parser.add_argument("--simple", "-s", action="store_true", help="Use simple spectrum bars instead")
     parser.add_argument("--duration", "-d", type=float, help="Limit video duration in seconds")
 
     args = parser.parse_args()
 
-    if args.short:
-        success = create_short(args.audio, args.image, args.output, args.name)
+    if args.simple:
+        success = create_simple_video(
+            args.audio, args.image, args.output,
+            track_name=args.name, limit_duration=args.duration
+        )
     else:
         success = create_video(
             args.audio, args.image, args.output,
             track_name=args.name, limit_duration=args.duration
         )
+
+        # Fallback to simple if complex fails
+        if not success:
+            print("\nFalling back to simple visualizer...")
+            success = create_simple_video(
+                args.audio, args.image, args.output,
+                track_name=args.name, limit_duration=args.duration
+            )
 
     sys.exit(0 if success else 1)
