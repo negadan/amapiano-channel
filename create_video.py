@@ -26,7 +26,8 @@ def create_visualizer_video(
     output_path: str,
     track_name: str = "",
     effect: str = "zoom",
-    limit_duration: float = None
+    limit_duration: float = None,
+    mask_path: str = None
 ) -> bool:
     """
     Create a music visualizer video with various effects
@@ -165,6 +166,80 @@ def create_visualizer_video(
         filter_complex = f"{video_filter}"
         map_args = ["-map", "[v]", "-map", "0:a"]
 
+    elif effect == "trees_pulse":
+        # Dark objects (trees/silhouettes) pulse with color shifts
+        # Targets dark pixels (trees in silhouette images) with rhythm
+        video_filter = (
+            f"[1:v]{scale_filter},"
+            f"geq=lum='lum(X,Y)*(1+0.1*sin(N/{VIDEO_FPS}*2)*(1-lum(X,Y)/255))':"
+            f"cb='cb(X,Y)+20*sin(N/{VIDEO_FPS}*3)*(1-lum(X,Y)/255)':"
+            f"cr='cr(X,Y)+25*sin(N/{VIDEO_FPS}*2.5)*(1-lum(X,Y)/255)',"
+            f"zoompan=z='1+0.0003*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS}[v]"
+        )
+        filter_complex = f"{video_filter}"
+        map_args = ["-map", "[v]", "-map", "0:a"]
+
+    elif effect == "silhouette_glow":
+        # Silhouettes get edge glow that pulses with music
+        video_filter = (
+            f"[1:v]{scale_filter}[base];"
+            f"[base]split=2[bg][edge_src];"
+            f"[edge_src]edgedetect=low=0.1:high=0.3,negate,"
+            f"geq=lum='lum(X,Y)*(1+0.5*sin(N/{VIDEO_FPS}*3))':cb=128:cr=128,"
+            f"hue=h=280:s=1.5,gblur=sigma=8[purple_glow];"
+            f"[bg][purple_glow]blend=all_mode=screen:all_opacity=0.6,"
+            f"zoompan=z='1+0.0002*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS}[v]"
+        )
+        filter_complex = f"{video_filter}"
+        map_args = ["-map", "[v]", "-map", "0:a"]
+
+    elif effect == "object_breathe":
+        # Dark objects (trees) breathe/scale slightly with audio rhythm
+        video_filter = (
+            f"[1:v]{scale_filter}[base];"
+            f"[base]geq="
+            f"lum='lum(X,Y)*(1+0.08*sin(N/{VIDEO_FPS}*2)*(1-lum(X,Y)/255))':"
+            f"cb='cb(X,Y)+8*sin(N/{VIDEO_FPS}*1.5)*(1-lum(X,Y)/255)':"
+            f"cr='cr(X,Y)+12*sin(N/{VIDEO_FPS}*2.2)*(1-lum(X,Y)/255)',"
+            f"zoompan=z='1+0.0003*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS}[v]"
+        )
+        filter_complex = f"{video_filter}"
+        map_args = ["-map", "[v]", "-map", "0:a"]
+
+    elif effect == "masked_glow":
+        # Use AI-generated mask to make specific objects glow with music
+        # Requires: mask image (white = effect area, black = no effect)
+        # The mask should be passed as input 2
+        video_filter = (
+            f"[1:v]{scale_filter}[bg];"
+            f"[2:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT},format=gray[mask];"
+            f"[bg]split=2[base][effect_src];"
+            f"[effect_src]geq="
+            f"lum='lum(X,Y)*(1.2+0.3*sin(N/{VIDEO_FPS}*3))':"
+            f"cb='cb(X,Y)+30*sin(N/{VIDEO_FPS}*2.5)':"
+            f"cr='cr(X,Y)+40*sin(N/{VIDEO_FPS}*2)',"
+            f"gblur=sigma=3[glowing];"
+            f"[base][glowing][mask]maskedmerge[merged];"
+            f"[merged]zoompan=z='1+0.0002*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS}[v]"
+        )
+        filter_complex = f"{video_filter}"
+        map_args = ["-map", "[v]", "-map", "0:a"]
+
+    elif effect == "people_glow":
+        # Make people/foreground objects pulse and glow with the beat
+        # Uses mask where white = people
+        video_filter = (
+            f"[1:v]{scale_filter}[bg];"
+            f"[2:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT},format=gray[mask];"
+            f"[bg]split=2[base][glow_src];"
+            f"[glow_src]hue=h=30*sin(t*2):s=1+0.3*sin(t*3):b=1+0.2*sin(t*2.5),"
+            f"gblur=sigma=4[effect];"
+            f"[base][effect][mask]maskedmerge[merged];"
+            f"[merged]zoompan=z='1+0.0002*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS}[v]"
+        )
+        filter_complex = f"{video_filter}"
+        map_args = ["-map", "[v]", "-map", "0:a"]
+
     elif effect == "vintage":
         # Lo-fi aesthetic: Film grain + Vignette + Sepia tone
         video_filter = (
@@ -195,6 +270,16 @@ def create_visualizer_video(
         "ffmpeg", "-y",
         "-i", audio_path,
         "-loop", "1", "-i", image_path,
+    ]
+
+    # Add mask input if using mask-based effects
+    if mask_path and effect in ["masked_glow", "people_glow"]:
+        if not os.path.exists(mask_path):
+            print(f"ERROR: Mask file not found: {mask_path}")
+            return False
+        cmd.extend(["-loop", "1", "-i", mask_path])
+
+    cmd.extend([
         "-filter_complex", filter_complex,
         *map_args,
         "-c:v", "libx264",
@@ -204,7 +289,7 @@ def create_visualizer_video(
         "-b:a", "192k",
         "-shortest",
         "-pix_fmt", "yuv420p"
-    ]
+    ])
 
     if limit_duration:
         cmd.extend(["-t", str(limit_duration)])
@@ -279,8 +364,10 @@ if __name__ == "__main__":
     parser.add_argument("--effect", "-e", default="zoom",
                        choices=["zoom", "pulse", "waves", "spectrum", "vintage", "static",
                                 "glow_spectrum", "audio_pulse", "circle_viz", "bars_bottom",
-                                "dual_waves", "audioreactive", "neon_bars"],
+                                "dual_waves", "audioreactive", "neon_bars", "trees_pulse",
+                                "silhouette_glow", "object_breathe", "masked_glow", "people_glow"],
                        help="Visual effect to use")
+    parser.add_argument("--mask", "-m", help="Mask image for masked effects (white=effect area)")
     parser.add_argument("--short", "-s", action="store_true", help="Create YouTube Short instead")
     parser.add_argument("--duration", "-d", type=float, help="Limit video duration in seconds")
 
@@ -292,7 +379,7 @@ if __name__ == "__main__":
         success = create_visualizer_video(
             args.audio, args.image, args.output,
             track_name=args.name, effect=args.effect,
-            limit_duration=args.duration
+            limit_duration=args.duration, mask_path=args.mask
         )
 
     sys.exit(0 if success else 1)
