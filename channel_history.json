@@ -1,0 +1,66 @@
+{
+  "channel": {
+    "name": "LatentFlow",
+    "handle": "@latentflow",
+    "created": "2026-01-07"
+  },
+  "tracks": [
+    {
+      "id": "remember_when",
+      "title": "Remember When",
+      "suno_url": "https://suno.com/s/M2sT9pAduGvae9pI",
+      "playlist": "chill",
+      "status": "uploaded",
+      "uploaded": true,
+      "youtube_url": "https://youtu.be/5DYDbQgVRXE",
+      "youtube_id": "5DYDbQgVRXE",
+      "shorts_created": false,
+      "video_file": "tracks/remember_when/video.mp4",
+      "created_at": "2026-01-07"
+    }
+  ],
+  "stats": {
+    "total_tracks": 1,
+    "total_uploads": 1,
+    "total_shorts": 0,
+    "monetization_status": "not_eligible",
+    "subscribers": 0,
+    "watch_hours": 0
+  },
+  "playlists": {
+    "chill": [
+      "5DYDbQgVRXE"
+    ],
+    "party": [],
+    "deep": [],
+    "fusion": [],
+    "new": []
+  },
+  "playlist_urls": {
+    "chill": {
+      "id": "PLBJ04ECkxUV95VcSO14RE3P2fV4QPWLsz",
+      "title": "Amapiano Chill - Study & Relax",
+      "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV95VcSO14RE3P2fV4QPWLsz"
+    },
+    "party": {
+      "id": "PLBJ04ECkxUV_PLrxk61qWLvl7L0wjAeio",
+      "title": "Amapiano Party - High Energy",
+      "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV_PLrxk61qWLvl7L0wjAeio"
+    },
+    "deep": {
+      "id": "PLBJ04ECkxUV-kLbBBjv0OvKEVrvl-ZID1",
+      "title": "Amapiano Deep - Soulful Vibes",
+      "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV-kLbBBjv0OvKEVrvl-ZID1"
+    },
+    "fusion": {
+      "id": "PLBJ04ECkxUV8-UDbqOUufD6ldifgAcTIy",
+      "title": "Amapiano Fusion - World Music",
+      "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV8-UDbqOUufD6ldifgAcTIy"
+    },
+    "new": {
+      "id": "PLBJ04ECkxUV-eULEkdUdbq8Swp95J7J6C",
+      "title": "New Amapiano 2026 - Latest Hits",
+      "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV-eULEkdUdbq8Swp95J7J6C"
+    }
+  }
+}

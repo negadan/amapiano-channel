@@ -32,3 +32,4 @@ assets/*
 
 # Config with secrets (use config.example.py)
 config.py
+youtube_token.pickle
