@@ -11,10 +11,14 @@ import time
 from config import FAL_API_KEY, VISUAL_STYLES
 
 # Use fal.ai REST API
-FAL_API_URL = "https://fal.run/fal-ai/flux/schnell"
+# Switching to Flux Dev for reliable custom high-resolution support
+DEFAULT_MODEL = "fal-ai/flux/dev"
 
-def generate_image(prompt: str, output_path: str, width: int = 1920, height: int = 1080) -> bool:
-    """Generate an image using fal.ai FLUX"""
+def generate_image(prompt: str, output_path: str, width: int = 2560, height: int = 1440, model: str = DEFAULT_MODEL) -> bool:
+    """
+    Generate an image using fal.ai
+    Default: QHD (2560x1440) using Flux Dev (Best balance for high-res 16:9)
+    """
 
     if not FAL_API_KEY:
         print("ERROR: FAL_API_KEY not set in config.py")
@@ -25,25 +29,27 @@ def generate_image(prompt: str, output_path: str, width: int = 1920, height: int
         "Content-Type": "application/json"
     }
 
+    # Construct URL based on model
+    api_url = f"https://fal.run/{model}"
+
+    # Flux Dev respects explicit dimensions well
     payload = {
         "prompt": prompt,
-        "image_size": "landscape_16_9",
+        "image_size": {
+            "width": width,
+            "height": height
+        },
         "num_images": 1,
-        "enable_safety_checker": False
+        "enable_safety_checker": False,
+        "safety_tolerance": "2"
     }
 
-    print(f"Generating image...")
+    print(f"Generating image ({width}x{height}) with {model}...")
     print(f"Prompt: {prompt[:100]}...")
 
     try:
-        # Submit request (synchronous endpoint)
-        response = requests.post(FAL_API_URL, headers=headers, json=payload, timeout=120)
-
-        if response.status_code == 401 or response.status_code == 403:
-            print(f"Auth error. Trying alternative endpoint...")
-            # Try alternative endpoint
-            alt_url = "https://fal.run/fal-ai/fast-sdxl"
-            response = requests.post(alt_url, headers=headers, json=payload, timeout=120)
+        # Submit request (synchronous endpoint for most)
+        response = requests.post(api_url, headers=headers, json=payload, timeout=180)
 
         response.raise_for_status()
         result = response.json()
@@ -57,7 +63,11 @@ def generate_image(prompt: str, output_path: str, width: int = 1920, height: int
         elif "image" in result:
             image_url = result["image"].get("url")
         elif "output" in result:
-            image_url = result["output"]
+            output = result["output"]
+            if isinstance(output, list) and len(output) > 0:
+                image_url = output[0]
+            elif isinstance(output, str):
+                image_url = output
 
         if image_url:
             # Download image
@@ -71,16 +81,13 @@ def generate_image(prompt: str, output_path: str, width: int = 1920, height: int
             print(f"Image saved to: {output_path}")
             return True
         else:
-            print(f"No image URL in response")
+            print(f"No image URL in response: {result}")
             return False
 
-    except requests.exceptions.RequestException as e:
-        print(f"Request error: {e}")
-        if hasattr(e, 'response') and e.response is not None:
-            print(f"Response: {e.response.text[:500]}")
-        return False
     except Exception as e:
         print(f"Error generating image: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+             print(f"API Response: {e.response.text}")
         return False
 
 
@@ -109,6 +116,7 @@ if __name__ == "__main__":
     else:
         style = "nostalgic"
 
+    print(f"Testing generation for style: {style}")
     result = generate_for_track("remember_when", style)
     if result:
         print(f"Success! Image at: {result}")

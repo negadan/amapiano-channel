@@ -10,19 +10,54 @@
       "title": "Remember When",
       "suno_url": "https://suno.com/s/M2sT9pAduGvae9pI",
       "playlist": "chill",
-      "status": "uploaded",
+      "status": "public",
       "uploaded": true,
       "youtube_url": "https://youtu.be/5DYDbQgVRXE",
       "youtube_id": "5DYDbQgVRXE",
-      "shorts_created": false,
+      "shorts_created": true,
       "video_file": "tracks/remember_when/video.mp4",
-      "created_at": "2026-01-07"
+      "created_at": "2026-01-07",
+      "short_url": "https://youtube.com/shorts/jDArA085c3s",
+      "short_id": "jDArA085c3s",
+      "related_video_set": false
+    },
+    {
+      "id": "inspired_by_the_numbers",
+      "title": "Inspired by The Numbers",
+      "suno_url": "https://suno.com/s/yZcl05q5mZoMQsyU",
+      "playlist": "deep",
+      "status": "public",
+      "uploaded": true,
+      "youtube_url": "https://youtu.be/nN5XOpPyT7w",
+      "youtube_id": "nN5XOpPyT7w",
+      "shorts_created": true,
+      "video_file": "tracks/inspired_by_the_numbers/video.mp4",
+      "created_at": "2026-01-09",
+      "short_url": "https://youtu.be/swjfJDdc39Y",
+      "short_id": "swjfJDdc39Y",
+      "related_video_set": false
+    },
+    {
+      "id": "reborn",
+      "title": "Reborn",
+      "suno_url": "https://suno.com/s/RUD0moU0I5fN9Rou",
+      "playlist": "deep",
+      "status": "public",
+      "uploaded": true,
+      "youtube_url": "https://youtu.be/zk9DkEvJ16w",
+      "youtube_id": "zk9DkEvJ16w",
+      "shorts_created": true,
+      "video_file": "tracks/reborn/video.mp4",
+      "created_at": "2026-01-09",
+      "short_url": "https://youtu.be/Aafy-kSSjQw",
+      "short_id": "Aafy-kSSjQw",
+      "related_video_set": false
     }
   ],
   "stats": {
-    "total_tracks": 1,
-    "total_uploads": 1,
-    "total_shorts": 0,
+    "total_tracks": 3,
+    "total_uploads": 6,
+    "total_shorts": 3,
     "monetization_status": "not_eligible",
     "subscribers": 0,
     "watch_hours": 0
@@ -32,35 +67,120 @@
       "5DYDbQgVRXE"
     ],
     "party": [],
-    "deep": [],
+    "deep": [
+      "nN5XOpPyT7w",
+      "zk9DkEvJ16w"
+    ],
     "fusion": [],
     "new": []
   },
   "playlist_urls": {
     "chill": {
       "id": "PLBJ04ECkxUV95VcSO14RE3P2fV4QPWLsz",
-      "title": "Amapiano Chill - Study & Relax",
+      "title": "Chill - Study & Relax",
       "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV95VcSO14RE3P2fV4QPWLsz"
     },
     "party": {
       "id": "PLBJ04ECkxUV_PLrxk61qWLvl7L0wjAeio",
-      "title": "Amapiano Party - High Energy",
+      "title": "Party - High Energy",
       "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV_PLrxk61qWLvl7L0wjAeio"
     },
     "deep": {
       "id": "PLBJ04ECkxUV-kLbBBjv0OvKEVrvl-ZID1",
-      "title": "Amapiano Deep - Soulful Vibes",
+      "title": "Deep - Soulful Vibes",
       "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV-kLbBBjv0OvKEVrvl-ZID1"
     },
     "fusion": {
       "id": "PLBJ04ECkxUV8-UDbqOUufD6ldifgAcTIy",
-      "title": "Amapiano Fusion - World Music",
+      "title": "Fusion - World Music",
       "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV8-UDbqOUufD6ldifgAcTIy"
     },
     "new": {
       "id": "PLBJ04ECkxUV-eULEkdUdbq8Swp95J7J6C",
-      "title": "New Amapiano 2026 - Latest Hits",
+      "title": "New Releases 2026",
       "url": "https://youtube.com/playlist?list=PLBJ04ECkxUV-eULEkdUdbq8Swp95J7J6C"
     }
-  }
+  },
+  "pending_tasks": {
+    "shorts_need_related_video": [
+      {
+        "short_id": "jDArA085c3s",
+        "short_title": "Remember When",
+        "link_to_video_id": "5DYDbQgVRXE"
+      },
+      {
+        "short_id": "swjfJDdc39Y",
+        "short_title": "Inspired by The Numbers",
+        "link_to_video_id": "nN5XOpPyT7w"
+      },
+      {
+        "short_id": "Aafy-kSSjQw",
+        "short_title": "Reborn",
+        "link_to_video_id": "zk9DkEvJ16w"
+      }
+    ]
+  },
+  "videos": [
+    {
+      "video_id": "R_vWmemvEbc",
+      "title": "Remember When \ud83d\udcfc | Nostalgic Amapiano #Shorts",
+      "uploaded_at": "2026-01-08T07:30:27.859688",
+      "privacy": "public",
+      "url": "https://youtu.be/R_vWmemvEbc",
+      "local_file": "tracks/remember_when/short_v2.mp4"
+    },
+    {
+      "video_id": "_ZCxE3Ei8-A",
+      "title": "Inspired by The Numbers | Soulful Amapiano 2026",
+      "uploaded_at": "2026-01-09T12:28:37.564033",
+      "privacy": "public",
+      "url": "https://youtu.be/_ZCxE3Ei8-A",
+      "local_file": "tracks/inspired_by_the_numbers/video.mp4"
+    },
+    {
+      "video_id": "swjfJDdc39Y",
+      "title": "Inspired by The Numbers \ud83c\udfb9 | Soulful Amapiano #Shorts",
+      "uploaded_at": "2026-01-09T12:29:25.235497",
+      "privacy": "public",
+      "url": "https://youtu.be/swjfJDdc39Y",
+      "local_file": "tracks/inspired_by_the_numbers/short.mp4"
+    },
+    {
+      "video_id": "n8M5-ZjQHus",
+      "title": "Inspired by The Numbers | Soulful Amapiano 2026",
+      "uploaded_at": "2026-01-09T15:46:48.562686",
+      "privacy": "public",
+      "url": "https://youtu.be/n8M5-ZjQHus",
+      "local_file": "tracks/inspired_by_the_numbers/video.mp4"
+    },
+    {
+      "video_id": "nN5XOpPyT7w",
+      "title": "Inspired by The Numbers | Soulful Amapiano 2026",
+      "uploaded_at": "2026-01-09T16:31:50.944466",
+      "privacy": "public",
+      "url": "https://youtu.be/nN5XOpPyT7w",
+      "local_file": "tracks/inspired_by_the_numbers/video_styled.mp4"
+    },
+    {
+      "video_id": "zk9DkEvJ16w",
+      "title": "Reborn | Soulful Afro-fusion 2026",
+      "uploaded_at": "2026-01-09T17:16:57.421258",
+      "privacy": "public",
+      "url": "https://youtu.be/zk9DkEvJ16w",
+      "local_file": "tracks/reborn/video.mp4"
+    },
+    {
+      "video_id": "Aafy-kSSjQw",
+      "title": "Reborn | Soulful Afro-fusion #Shorts",
+      "uploaded_at": "2026-01-09T17:17:29.186532",
+      "privacy": "public",
+      "url": "https://youtu.be/Aafy-kSSjQw",
+      "local_file": "tracks/reborn/short.mp4"
+    }
+  ],
+  "shorts": [],
+  "total_uploads": 8,
+  "monetization_status": "not_eligible",
+  "subscribers": 0,
+  "watch_hours": 0
 }

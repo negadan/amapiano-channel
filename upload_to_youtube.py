@@ -72,10 +72,7 @@ def get_authenticated_service():
 
 def load_history():
     """Load channel history from JSON file"""
-    if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, 'r') as f:
-            return json.load(f)
-    return {
+    default_history = {
         "videos": [],
         "shorts": [],
         "total_uploads": 0,
@@ -83,6 +80,19 @@ def load_history():
         "subscribers": 0,
         "watch_hours": 0
     }
+
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, 'r') as f:
+            try:
+                loaded_history = json.load(f)
+                # Merge defaults to ensure keys exist
+                for key, value in default_history.items():
+                    if key not in loaded_history:
+                        loaded_history[key] = value
+                return loaded_history
+            except json.JSONDecodeError:
+                return default_history
+    return default_history
 
 
 def save_history(history):

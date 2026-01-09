@@ -7,6 +7,7 @@ Clean spectrum bars + sparkles + Ken Burns zoom
 import os
 import subprocess
 import sys
+import shutil
 from config import VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS, CHANNEL_NAME
 
 # Layout constants
@@ -14,6 +15,13 @@ TEXT_MARGIN = 60
 FADE_DURATION = 2
 VISUALIZER_HEIGHT = 180
 
+def check_encoder(encoder_name: str) -> bool:
+    """Check if an ffmpeg encoder is available"""
+    try:
+        result = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True)
+        return encoder_name in result.stdout
+    except:
+        return False
 
 def get_audio_duration(audio_path: str) -> float:
     """Get duration of audio file in seconds"""
@@ -35,11 +43,7 @@ def create_video(
     limit_duration: float = None
 ) -> bool:
     """
-    Create a professional music visualizer with:
-    - Ken Burns slow zoom
-    - Glowing spectrum bars at bottom
-    - Sparkle particles
-    - Cinematic vignette
+    Create a professional music visualizer with mobile optimizations.
     """
 
     if not os.path.exists(audio_path):
@@ -55,17 +59,27 @@ def create_video(
     duration = limit_duration if limit_duration and limit_duration < audio_duration else audio_duration
     total_frames = int(duration * VIDEO_FPS)
 
-    print(f"Creating video with spectrum bars + sparkles...")
+    # Detect hardware acceleration (Android/Termux)
+    use_hw = check_encoder("h264_mediacodec")
+    encoder = "h264_mediacodec" if use_hw else "libx264"
+    preset = "fast" if not use_hw else None # mediacodec doesn't use presets usually
+    
+    print(f"Creating video: {VIDEO_WIDTH}x{VIDEO_HEIGHT} | Encoder: {encoder}")
     print(f"Duration: {duration:.1f}s | Frames: {total_frames}")
 
     # Escape text
     safe_track = track_name.replace("'", "'\\''").replace(":", "\\:") if track_name else ""
     safe_channel = CHANNEL_NAME.replace("'", "'\\''")
 
+    # Optimization: Render visualizers at lower res if output is 4K
+    viz_width = min(VIDEO_WIDTH, 1920)
+    viz_height = int(VISUALIZER_HEIGHT * (viz_width / VIDEO_WIDTH)) if VIDEO_WIDTH > 1920 else VISUALIZER_HEIGHT
+
     # Build the filter complex
     filter_parts = []
 
     # 1. Background with Ken Burns zoom + vignette
+    # We scale to slightly larger than output to give zoompan room without upscaling
     filter_parts.append(
         f"[0:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}:force_original_aspect_ratio=increase,"
         f"crop={VIDEO_WIDTH}:{VIDEO_HEIGHT},"
@@ -74,39 +88,43 @@ def create_video(
         f"vignette=PI/5[bg]"
     )
 
-    # 2. Spectrum bars with glow (warm colors to match sunset)
+    # 2. Spectrum bars with glow
+    # Render at viz_width to save CPU
     filter_parts.append(
-        f"[1:a]showfreqs=s={VIDEO_WIDTH}x{VISUALIZER_HEIGHT}:"
+        f"[1:a]showfreqs=s={viz_width}x{viz_height}:"
         f"mode=bar:ascale=sqrt:fscale=log:"
         f"colors=0xFFAA00|0xFF6600|0xFF3300:"
         f"win_size=1024[bars_raw]"
     )
 
-    # Add glow to bars
+    # Add glow to bars (cheaper at lower res)
     filter_parts.append(
         f"[bars_raw]split[b1][b2];"
-        f"[b1]gblur=sigma=8[bars_blur];"
-        f"[bars_blur][b2]blend=all_mode=screen:all_opacity=0.9[bars_glow]"
+        f"[b1]gblur=sigma=5[bars_blur];"
+        f"[bars_blur][b2]blend=all_mode=screen:all_opacity=0.9[bars_glow_small]"
     )
+    
+    # Scale bars back up if needed
+    bars_glow_label = "[bars_glow_small]"
+    if viz_width < VIDEO_WIDTH:
+        filter_parts.append(f"[bars_glow_small]scale={VIDEO_WIDTH}:{VISUALIZER_HEIGHT}:flags=bilinear[bars_glow]")
+        bars_glow_label = "[bars_glow]"
 
-    # 3. Create sparkles/particles from audio
-    # Use showwaves to create subtle particle movement synced to audio
+    # 3. Create sparkles/particles (cheaper at lower res)
     filter_parts.append(
-        f"[1:a]showwaves=s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:"
+        f"[1:a]showwaves=s={viz_width}x{viz_height}:"
         f"mode=p2p:colors=white@0.3:"
         f"scale=sqrt:rate={VIDEO_FPS}[waves_raw];"
-        f"[waves_raw]gblur=sigma=2[sparkles]"
+        f"[waves_raw]gblur=sigma=2,scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}[sparkles]"
     )
 
     # 4. Composite layers
-    # Background + sparkles (subtle)
     filter_parts.append(
         f"[bg][sparkles]blend=all_mode=screen:all_opacity=0.15[bg_sparkle]"
     )
 
-    # Add spectrum bars at bottom with gradient fade
     filter_parts.append(
-        f"[bars_glow]format=rgba,"
+        f"{bars_glow_label}format=rgba,"
         f"geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':"
         f"a='alpha(X,Y)*min(1,(H-Y)/{VISUALIZER_HEIGHT}*1.5)'[bars_fade];"
         f"[bg_sparkle][bars_fade]overlay=0:H-{VISUALIZER_HEIGHT}:format=auto[with_bars]"
@@ -125,14 +143,14 @@ def create_video(
         text_filter += (
             f"drawtext=text='{safe_track}':"
             f"x={TEXT_MARGIN}:y={TEXT_MARGIN}:"
-            f"fontsize=52:fontcolor=white:"
+            f"fontsize={int(52 * (VIDEO_WIDTH/1920))}:fontcolor=white:"
             f"borderw=3:bordercolor=black@0.7,"
         )
 
     text_filter += (
         f"drawtext=text='@{safe_channel}':"
         f"x=w-text_w-{TEXT_MARGIN}:y=h-{TEXT_MARGIN}-{VISUALIZER_HEIGHT}:"
-        f"fontsize=26:fontcolor=white@0.8:"
+        f"fontsize={int(26 * (VIDEO_WIDTH/1920))}:fontcolor=white@0.8:"
         f"borderw=2:bordercolor=black@0.5[v]"
     )
     filter_parts.append(text_filter)
@@ -146,15 +164,42 @@ def create_video(
         "-loop", "1", "-i", image_path,
         "-i", audio_path,
         "-filter_complex", filter_complex,
-        "-map", "[v]", "-map", "1:a",
-        "-c:v", "libx264",
-        "-preset", "medium",
-        "-crf", "23",
+        "-map", "[v]", "-map", "1:a"
+    ]
+    
+    # Encoder settings
+    if use_hw:
+        cmd.extend(["-c:v", "h264_mediacodec", "-b:v", "12M" if VIDEO_WIDTH > 1920 else "5M"])
+    else:
+        cmd.extend(["-c:v", "libx264", "-preset", "fast", "-crf", "23"])
+        
+    cmd.extend([
         "-c:a", "aac",
         "-b:a", "192k",
         "-shortest",
         "-pix_fmt", "yuv420p"
-    ]
+    ])
+
+    if limit_duration:
+        cmd.extend(["-t", str(limit_duration)])
+
+    cmd.append(output_path)
+
+    try:
+        # Using direct execution to ensure all output is visible
+        print("Starting FFmpeg...")
+        # subprocess.run will stream output directly to stdout/stderr
+        result = subprocess.run(cmd, text=True)
+        
+        if result.returncode != 0:
+            print(f"\nFFmpeg failed with exit code {result.returncode}")
+            return False
+            
+        print("Video created successfully!")
+        return True
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
 
     if limit_duration:
         cmd.extend(["-t", str(limit_duration)])
