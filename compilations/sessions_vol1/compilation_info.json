@@ -1,0 +1,83 @@
+{
+  "name": "LatentFlow Sessions Vol. 1",
+  "tracks": [
+    {
+      "title": "Street Energy",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/01_street_energy.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/01_street_energy.png",
+      "duration": 184.839979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "YoSo",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/02_yoso.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/02_yoso.png",
+      "duration": 192.599979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Midnight Groove",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/03_midnight_groove.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/03_midnight_groove.png",
+      "duration": 256.759979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Childhood Memories",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/04_childhood_memories.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/04_childhood_memories.png",
+      "duration": 192.759979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Three Step",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/05_three_step.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/05_three_step.png",
+      "duration": 169.159979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Spirit Walk",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/06_spirit_walk.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/06_spirit_walk.png",
+      "duration": 236.719979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Euphoria",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/07_euphoria.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/07_euphoria.png",
+      "duration": 268.399979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Nostalgic Swing",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/08_nostalgic_swing.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/08_nostalgic_swing.png",
+      "duration": 182.799979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Sacred Space",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/09_sacred_space.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/09_sacred_space.png",
+      "duration": 309.959979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Township Live",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/10_township_live.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/10_township_live.png",
+      "duration": 235.119979,
+      "detected_mood": "deep"
+    },
+    {
+      "title": "Late Night Goje",
+      "local_audio": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/11_late_night_goje.mp3",
+      "local_image": "/data/data/com.termux/files/home/myproject/amapiano-channel/compilations/sessions_vol1/11_late_night_goje.png",
+      "duration": 423.159979,
+      "detected_mood": "deep"
+    }
+  ],
+  "total_minutes": 44.20466281666666
+}
